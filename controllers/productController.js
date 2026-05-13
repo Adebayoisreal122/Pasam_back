@@ -1,6 +1,8 @@
 const Product = require('../models/Product');
 const { uploadImage, deleteImage } = require('../utils/cloudinary');
 const mongoose = require('mongoose');
+
+
 exports.getProducts = async (req, res) => {
   try {
     const {
@@ -39,48 +41,54 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+
 // exports.getProduct = async (req, res) => {
 //   try {
-//     const product = await Product.findOne({
-//       $or: [{ _id: req.params.id }, { slug: req.params.id }],
-//       isActive: true
-//     }).populate('category', 'name slug color');
+//     const param = req.params.id;
+
+//     let product;
+
+//     if (mongoose.Types.ObjectId.isValid(param)) {
+//       // Safe to search both
+//       product = await Product.findOne({
+//         $or: [{ _id: param }, { slug: param }],
+//         isActive: true
+//       }).populate('category', 'name slug color');
+//     } else {
+//       // ONLY search by slug (this avoids crash)
+//       product = await Product.findOne({
+//         slug: param,
+//         isActive: true
+//       }).populate('category', 'name slug color');
+//     }
 
 //     if (!product) {
-//       return res.status(404).json({ success: false, message: 'Product not found' });
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Product not found'
+//       });
 //     }
-//     res.json({ success: true, product });
+
+//     res.json({
+//       success: true,
+//       product
+//     });
+
 //   } catch (error) {
-//   console.error('PRODUCT ERROR:', error);
+//     console.error('PRODUCT ERROR:', error);
 
-//   res.status(500).json({
-//     success: false,
-//     message: error.message,
-//     stack: error.stack
-//   });
-// }
-// };
+//     res.status(500).json({
+//       success: false,
+//       message: error.message
+//     });
+//   }};
 
-
-exports.getProduct = async (req, res) => {
+exports.getProductBySlug = async (req, res) => {
   try {
-    const param = req.params.id;
-
-    let product;
-
-    if (mongoose.Types.ObjectId.isValid(param)) {
-      // Safe to search both
-      product = await Product.findOne({
-        $or: [{ _id: param }, { slug: param }],
-        isActive: true
-      }).populate('category', 'name slug color');
-    } else {
-      // ONLY search by slug (this avoids crash)
-      product = await Product.findOne({
-        slug: param,
-        isActive: true
-      }).populate('category', 'name slug color');
-    }
+    const product = await Product.findOne({
+      slug: req.params.slug,
+      isActive: true
+    }).populate('category', 'name slug color icon');
 
     if (!product) {
       return res.status(404).json({
@@ -89,19 +97,11 @@ exports.getProduct = async (req, res) => {
       });
     }
 
-    res.json({
-      success: true,
-      product
-    });
-
+    res.json({ success: true, product });
   } catch (error) {
-    console.error('PRODUCT ERROR:', error);
-
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }};
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 exports.getFeaturedProducts = async (req, res) => {
   try {
