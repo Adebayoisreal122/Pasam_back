@@ -3,7 +3,7 @@ const router = express.Router();
 const {
   getProducts, getProduct, getFeaturedProducts,
   getProductsByCategory, createProduct, updateProduct,
-  deleteProduct, deleteProductImage
+  deleteProduct, deleteProductImage, getProductBySlug
 } = require('../controllers/productController');
 const { protect, adminOnly } = require('../middleware/auth');
 const upload = require('../middleware/upload');
