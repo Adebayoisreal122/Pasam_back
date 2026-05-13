@@ -11,7 +11,7 @@ const upload = require('../middleware/upload');
 router.get('/', getProducts);
 router.get('/featured', getFeaturedProducts);
 router.get('/category/:categoryId', getProductsByCategory);
-// router.get('/:id', getProduct);
+router.get('/:id', getProduct);
 router.get('/slug/:slug', getProductBySlug);
 // Admin
 router.post('/', protect, adminOnly, upload.array('images', 5), createProduct);

@@ -42,46 +42,46 @@ exports.getProducts = async (req, res) => {
 };
 
 
-// exports.getProduct = async (req, res) => {
-//   try {
-//     const param = req.params.id;
+exports.getProduct = async (req, res) => {
+  try {
+    const param = req.params.id;
 
-//     let product;
+    let product;
 
-//     if (mongoose.Types.ObjectId.isValid(param)) {
-//       // Safe to search both
-//       product = await Product.findOne({
-//         $or: [{ _id: param }, { slug: param }],
-//         isActive: true
-//       }).populate('category', 'name slug color');
-//     } else {
-//       // ONLY search by slug (this avoids crash)
-//       product = await Product.findOne({
-//         slug: param,
-//         isActive: true
-//       }).populate('category', 'name slug color');
-//     }
+    if (mongoose.Types.ObjectId.isValid(param)) {
+      // Safe to search both
+      product = await Product.findOne({
+        $or: [{ _id: param }, { slug: param }],
+        isActive: true
+      }).populate('category', 'name slug color');
+    } else {
+      // ONLY search by slug (this avoids crash)
+      product = await Product.findOne({
+        slug: param,
+        isActive: true
+      }).populate('category', 'name slug color');
+    }
 
-//     if (!product) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'Product not found'
-//       });
-//     }
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
 
-//     res.json({
-//       success: true,
-//       product
-//     });
+    res.json({
+      success: true,
+      product
+    });
 
-//   } catch (error) {
-//     console.error('PRODUCT ERROR:', error);
+  } catch (error) {
+    console.error('PRODUCT ERROR:', error);
 
-//     res.status(500).json({
-//       success: false,
-//       message: error.message
-//     });
-//   }};
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }};
 
 exports.getProductBySlug = async (req, res) => {
   try {
