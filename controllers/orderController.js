@@ -109,22 +109,20 @@ exports.createOrder = async (req, res) => {
       await Coupon.findByIdAndUpdate(couponDoc._id, { $inc: { usedCount: 1 } });
     }
 
-    // Send confirmation email
-    try {
-      await sendOrderConfirmationEmail(req.user.email, order, req.user.fullname);
-    } catch (emailErr) {
-      console.error('Email send error:', emailErr.message);
-    }
-
     // Generate WhatsApp link
     const whatsappLink = generateWhatsAppOrderLink(order, process.env.WHATSAPP_BUSINESS_NUMBER);
 
+    // Respond immediately — don't wait for email
     res.status(201).json({
       success: true,
       message: 'Order placed successfully',
       order,
-      whatsappLink
+      whatsappLink: whatsappLink || ''
     });
+
+    // Send confirmation email in background (non-blocking)
+    sendOrderConfirmationEmail(req.user.email, order, req.user.fullname)
+      .catch(emailErr => console.error('Email send error:', emailErr.message));
   } catch (error) {
     console.error('Create order error:', error);
     res.status(500).json({ success: false, message: error.message });
