@@ -8,14 +8,35 @@ cloudinary.config({
 
 exports.uploadImage = async (buffer, folder = 'pasam') => {
   return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: 'image', quality: 'auto', fetch_format: 'auto' },
+
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'image',
+        quality: 'auto',
+        fetch_format: 'auto',
+        timeout: 120000
+      },
       (error, result) => {
-        if (error) reject(error);
-        else resolve({ url: result.secure_url, public_id: result.public_id });
+
+        if (error) {
+          console.error('CLOUDINARY ERROR:', error);
+          return reject(error);
+        }
+
+        resolve({
+          url: result.secure_url,
+          public_id: result.public_id
+        });
       }
     );
-    uploadStream.end(buffer);
+
+    stream.on('error', (err) => {
+      console.error('STREAM ERROR:', err);
+      reject(err);
+    });
+
+    stream.end(buffer);
   });
 };
 

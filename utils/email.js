@@ -1,34 +1,55 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter with better error handling
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT) || 587,
-    secure: false, // true for 465, false for 587
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false // helps with some Gmail issues
-    }
-  });
-};
+// ============================================
+// GLOBAL TRANSPORTER (REUSES CONNECTIONS)
+// ============================================
+
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.EMAIL_PORT) || 465,
+  secure: true, // true for port 465
+
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+
+  tls: {
+    rejectUnauthorized: false,
+  },
+
+  // ============================================
+  // CONNECTION POOLING
+  // ============================================
+
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 100,
+
+  // ============================================
+  // TIMEOUTS
+  // ============================================
+
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
+});
+
+// ============================================
+// VERIFY SMTP ON SERVER START
+// ============================================
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('❌ SMTP CONNECTION ERROR:', error);
+  } else {
+    console.log('✅ SMTP SERVER READY');
+  }
+});
+
 
 const sendEmail = async ({ to, subject, html }) => {
   const transporter = createTransporter();
-
-  // Verify connection first in development
-  if (process.env.NODE_ENV === 'development') {
-    try {
-      await transporter.verify();
-      console.log('📧 SMTP connection verified');
-    } catch (err) {
-      console.error('📧 SMTP verify failed:', err.message);
-      throw err;
-    }
-  }
 
   const info = await transporter.sendMail({
     from: process.env.EMAIL_FROM || `"PASAM Store" <${process.env.EMAIL_USER}>`,
@@ -37,7 +58,7 @@ const sendEmail = async ({ to, subject, html }) => {
     html,
   });
 
-  console.log(`📧 Email sent: ${info.messageId}`);
+  console.log(`📧 Email sent to ${to}: ${info.messageId}`);
   return info;
 };
 
@@ -86,7 +107,7 @@ exports.sendPasswordResetEmail = async (email, resetUrl, name) => {
             </a>
           </div>
           <p style="color:#6b7280;font-size:14px;">This link expires in <strong>30 minutes</strong>.</p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:16px;">If you didn't request a reset, ignore this email — your password is unchanged.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:16px;">If you didn't request this, ignore this email.</p>
         </div>
       </div>
     `
@@ -111,12 +132,10 @@ exports.sendOrderConfirmationEmail = async (email, order, name) => {
       <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
         <div style="background:linear-gradient(135deg,#16a34a,#f97316);padding:32px;text-align:center;">
           <h1 style="color:white;margin:0;font-size:26px;font-weight:800;">PASAM Store</h1>
-          <p style="color:rgba(255,255,255,0.85);margin:6px 0 0;">Order Confirmed!</p>
         </div>
         <div style="padding:32px;">
           <h2 style="color:#1f2937;margin:0 0 4px;">Thank you, ${name}!</h2>
           <p style="color:#6b7280;margin:0 0 20px;">Your order <strong style="color:#16a34a;">${order.orderNumber}</strong> has been placed.</p>
-
           <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:16px;margin-bottom:20px;">
             <p style="margin:0 0 8px;color:#166534;font-weight:700;">Payment Instructions</p>
             <table style="width:100%;font-size:14px;">
@@ -126,7 +145,6 @@ exports.sendOrderConfirmationEmail = async (email, order, name) => {
               <tr><td style="color:#166534;padding:2px 0;">Reference:</td><td style="font-weight:700;color:#16a34a;font-family:monospace;">${order.orderNumber}</td></tr>
             </table>
           </div>
-
           <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
             <thead>
               <tr style="background:#f9fafb;">
