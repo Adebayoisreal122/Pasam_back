@@ -2,7 +2,7 @@
 // For production, consider Twilio WhatsApp API
 
 exports.generateWhatsAppOrderLink = (order, phoneNumber) => {
-  const adminPhone = process.env.WHATSAPP_BUSINESS_NUMBER || '2348012345678';
+  const adminPhone = process.env.WHATSAPP_BUSINESS_NUMBER || '2349068918017';
   
   const itemsList = order.items
     .map(item => `• ${item.name} x${item.quantity} = ₦${(item.price * item.quantity).toLocaleString()}`)
