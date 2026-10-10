@@ -1,63 +1,40 @@
 const nodemailer = require('nodemailer');
 
-// ============================================
-// GLOBAL TRANSPORTER (REUSES CONNECTIONS)
-// ============================================
-
+// Single global transporter — reuses connection pool
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.EMAIL_PORT) || 465,
-  secure: true, // true for port 465
-
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-
-  tls: {
-    rejectUnauthorized: false,
-  },
-
-  // ============================================
-  // CONNECTION POOLING
-  // ============================================
-
+  tls: { rejectUnauthorized: false },
   pool: true,
   maxConnections: 5,
   maxMessages: 100,
-
-  // ============================================
-  // TIMEOUTS
-  // ============================================
-
   connectionTimeout: 10000,
   greetingTimeout: 10000,
   socketTimeout: 15000,
 });
 
-// ============================================
-// VERIFY SMTP ON SERVER START
-// ============================================
-
-transporter.verify((error, success) => {
+// Verify SMTP on startup
+transporter.verify((error) => {
   if (error) {
-    console.error('❌ SMTP CONNECTION ERROR:', error);
+    console.error('❌ SMTP CONNECTION ERROR:', error.message);
   } else {
-    console.log('✅ SMTP SERVER READY');
+    console.log('✅ SMTP SERVER READY — emails will work');
   }
 });
 
-
+// Core send function — uses the global transporter above
 const sendEmail = async ({ to, subject, html }) => {
-  const transporter = createTransporter();
-
   const info = await transporter.sendMail({
     from: process.env.EMAIL_FROM || `"PASAM Store" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html,
   });
-
   console.log(`📧 Email sent to ${to}: ${info.messageId}`);
   return info;
 };
