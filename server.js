@@ -8,10 +8,12 @@ require('dotenv').config();
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'https://pasam-dusky.vercel.app',
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
 }));
 

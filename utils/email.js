@@ -1,42 +1,41 @@
-const nodemailer = require('nodemailer');
 
-// Single global transporter — reuses connection pool
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT) || 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: { rejectUnauthorized: false },
-  pool: true,
-  maxConnections: 5,
-  maxMessages: 100,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-});
+const { Resend } = require('resend');
 
-// Verify SMTP on startup
-transporter.verify((error) => {
-  if (error) {
-    console.error('❌ SMTP CONNECTION ERROR:', error.message);
-  } else {
-    console.log('✅ SMTP SERVER READY — emails will work');
-  }
-});
+if (!process.env.RESEND_API_KEY) {
+  console.error('❌ RESEND_API_KEY is missing');
+}
 
-// Core send function — uses the global transporter above
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Shared email sender for all PASAM Store email workflows
 const sendEmail = async ({ to, subject, html }) => {
-  const info = await transporter.sendMail({
-    from: process.env.EMAIL_FROM || `"PASAM Store" <${process.env.EMAIL_USER}>`,
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
+
+  const from =
+    process.env.EMAIL_FROM || 'PASAM Store <onboarding@resend.dev>';
+
+  const { data, error } = await resend.emails.send({
+    from,
     to,
     subject,
     html,
   });
-  console.log(`📧 Email sent to ${to}: ${info.messageId}`);
-  return info;
+
+  if (error) {
+    console.error('❌ Resend email error:', {
+      name: error.name,
+      message: error.message,
+      statusCode: error.statusCode,
+    });
+
+    throw new Error(`Email delivery request failed: ${error.message}`);
+  }
+
+  console.log(`📧 Email accepted by Resend for ${to}: ${data.id}`);
+
+  return data;
 };
 
 exports.sendOTPEmail = async (email, otp, name) => {
