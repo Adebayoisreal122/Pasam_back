@@ -12,8 +12,22 @@ app.set("trust proxy", 1);
 
 // Security middleware
 app.use(helmet());
+
+// Allowed frontend origins
+const allowedOrigins = (
+  process.env.CLIENT_URL || 'http://localhost:3000'
+).split(',').map(url => url.trim());
+
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests without an Origin header (e.g. Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true
 }));
 
