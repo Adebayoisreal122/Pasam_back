@@ -14,7 +14,7 @@ const sendEmail = async ({ to, subject, html }) => {
   }
 
   const from =
-    process.env.EMAIL_FROM || 'PASAM Store <onboarding@resend.dev>';
+    process.env.EMAIL_FROM || 'PASAM Store <admin@pasammobilestore.com>';
 
   const { data, error } = await resend.emails.send({
     from,
